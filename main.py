@@ -48,7 +48,6 @@ def function_name(line):
 	return line + '\n'
 
 def function_content(line):
-	line = re.sub(';','', line) #REMOVE ;
 	if re.search('(' + types + ')' + '\s+', line): #IF VARIABLE
 		if re.search('=', line): #IF INITIALIZATION
 			line = re.sub('(' + types + ')' + '\s+', '', line) #REMOVE TYPE
@@ -57,10 +56,42 @@ def function_content(line):
 			line = re.sub('}', ']', line)
 			line = re.sub('true', 'True', line)
 			line = re.sub('false', 'False', line)
-		else:
+		else: #JUST A DECLARATION OF VARIABLE
 			line = ''
-	elif re.search('\s*}\s*', line):
+	elif re.search('(\s|{)*' + states + '\s*\(.+\)\s*', line):
+			line = re.sub('\(|\)|{|\n', '', line)
+			line = re.sub('\s*$', '', line)
+			line = re.sub('}\s*', '', line)
+			line = re.sub('else\s+if', 'elif', line)
+			line = re.sub('&&', 'and', line)
+			line = re.sub('\|\|', 'or', line)
+			if re.search('![^=]', line):
+				line = re.sub('!', 'not ', line)
+			line = line + ':\n'
+	elif re.search('\s*for\s*\(.*\)\s*{\s*', line):
+		# print(line)
+		tabs = re.search('^\s*', line).group(0) #REMEMBER SPACES BEFORE FOR
+		variable = re.search('\(\s*\w+', line).group(0) #
+		variable = re.sub('\(', '', variable)
+		start = re.search('\(\s*[\w\s=]+;', line).group(0)
+		start = re.sub('[\(a-z\s]+', '', start)
+		start = re.sub('=\s*', '', start)
+		start = re.sub(';', '', start)
+		step = re.search(';\s*[^\);]+\)', line).group(0)
+		step = re.sub('[^=]+=\s*', '', step)
+		step = re.sub('\s*\)', '', step)
+		end = re.search(';[^;]+;', line).group(0)
+		end = re.sub('[^<>=!]+[<>=!]\s*', '', end)
+		end = re.sub(';', '', end)
+		# print(end)
+		line = tabs + 'for ' + variable + ' in range(' + start + ', ' + end + ', ' + step + '):\n'
+		# print(line)
+	elif re.search('\s*}\s*', line): #REMOVING FUNCTION CLOSING BRACKET
 		line = re.sub('}', '', line)
+		# print(line)
+	line = re.sub(';','', line) #REMOVE ;	
+	line = re.sub('\+\+', ' += 1', line)
+	line = re.sub('--', ' -= 1', line)
 	return line
 
 def is_empty_func(function):
@@ -71,17 +102,20 @@ def is_empty_func(function):
 
 #CONVERTING EACH FUNCTION
 def convert_function(lines, start, end):
-	print(start, end)
+	# print(start, end)
 	function = []
 	isempty = 0
 	name = function_name(lines[start])
+	# print(name)
 	function.append(name)
 	start += 1
+	#CONVERTING FUNCTION CONTENT
 	while (start < end):
 		line = function_content(lines[start])
 		if line != '':
 			function.append(line)
 		start += 1
+	#IF FUNCTION IS EMPTY
 	if (is_empty_func(function)):
 		function.clear()
 		function.append(name)

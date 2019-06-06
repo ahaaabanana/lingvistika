@@ -35,6 +35,41 @@ def main():
 				line = ''
 		if line != '':
 			print(line)
-		"""
+	"""
 
+	#IF, WHILE, ELSE
+	"""
+	inputfile = sys.argv[1]
+	with open(inputfile, 'r') as in_file:
+		lines = in_file.readlines()
+	for line in lines:
+		if re.search('(\s|{)*' + states + '\s*\(.+\)\s*', line):
+			line = re.sub('\(|\)|{|\n', '', line)
+			line = re.sub('\s*$', '', line)
+			line = re.sub('}\s*', '', line)
+			line = re.sub('else\s+if', 'elif', line)
+			line = re.sub('&&', 'and', line)
+			line = re.sub('\|\|', 'or', line)
+			line = re.sub('!', 'not ', line)
+			line = line + ':\n'
+			print(line)
+	"""
+	x = '   for (counter = 0; i < 10; i += 1) {}  '
+	if re.search('\s*for\s*\(.*\)\s*{\s*', x):
+		tabs = re.search('^\s*', x).group(0)
+		variable = re.search('\(\s*\w+', x).group(0)
+		variable = re.sub('\(', '', variable)
+		start = re.search('\(\s*[\w\s=]+;', x).group(0)
+		start = re.sub('[\(a-z\s]+', '', start)
+		start = re.sub('=\s*', '', start)
+		start = re.sub(';', '', start)
+		step = re.search(';\s*[^\);]+\)', x).group(0)
+		step = re.sub('[^=]+=\s*', '', step)
+		step = re.sub('\s*\)', '', step)
+		end = re.search(';[^;]+;', x).group(0)
+		end = re.sub('[^<>=!]+[<>=!]\s*', '', end)
+		end = re.sub(';', '', end)
+		# print(end)
+		line = tabs + 'for ' + variable + ' in range(' + start + ', ' + end + ', ' + step + '):\n'
+		print(line)
 main()
